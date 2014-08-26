@@ -1,0 +1,27 @@
+
+{% extends 'form_base.html' %}
+
+{% block title %}Payment {% endblock %}
+   
+{% block midpart %}
+{% if record_added %}
+            <h3 style="color:green">Fees Type Added Successfully</h3>
+{% else %}
+            {% if fee_list %}
+            <h3 style="color:green">Guardian Added Successfully</h3>
+        
+            <form action="/admission/select_fees_types/"  method="POST">
+                        {% csrf_token %}
+                        <h2>Select Payments To be Paid</h2>
+                         <ul>
+                {% for fee in fee_list %}
+                               
+                                 <h2><li><input type="checkbox" name="fees_type" value={{fee.fees_type.id}}>{{fee.fees_type}}</li></h2>
+                {% endfor %}
+               <input type="submit" value="Submit and proceed">
+                        </ul>
+            </form>
+           
+            {% endif %}
+   
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'form_base.html' %}
+
+
+
+
+{% block title %}Student Payment Details {% endblock %}
+   
+{% block midpart %}
+        
+<h2>Student Payment Details</h2>
+
+<table border="2" cellspacing="2" cellpadding="20">
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+{% if sp_details_list %}
+        <tr>
+            
+            <td><h3>Student</h3></td>
+            <td><h3>Student Group</h3></td>
+            <td><h3>Fees Type</h3></td>
+            <td><h3>Payment Mode</h3></td>
+            <td><h3>Amount</h3></td>
+           
+            <td><h3>Acceted On</h3></td>
+           
+           
+        </tr>
+
+    {% for i in sp_details_list %}
+        
+        <tr>
+          
+             
+            <td>
+            {{i.student_payment.student}}<p></p>
+            </td>
+             
+            <td>
+            {{i.student_group}}<p></p>
+            </td>
+            
+            <td>
+            {{i.student_payment.fee.fees_type}}<p></p>
+            </td>
+            
+            <td>
+            {{i.payment_mode}}<p></p>
+            </td>
+              
+            <td>
+            {{i.amount}}<p></p>
+            </td>
+            
+             <td>
+            {{i.created_on}}<p></p>
+            </td>
+
+        
+           
+        </tr>
+    {% endfor %}
+    {% endif %}
+</table>
+<p></p>
+
+<br>
+    
+
+</table>
+
+{{ins_obj}}
+{% endblock %}

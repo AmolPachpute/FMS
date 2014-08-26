@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Manage Fee Structures{% endblock %}
+    
+{% block midpart %}
+<h2>Fee Structures</h2><p></p>
+<div>
+    <form action="/fms/manage/fees/"  method="get">
+        {% csrf_token %}
+        select Status: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <select name="status">
+            <option selected value="">select Status</option>
+            <option value="fixed">Fixed</option>
+            <option value="recursive">Recursive</option>
+        </select>
+
+       <p></p>
+        Select Fee Type: &nbsp; 
+        <select name="fees_type">
+             {% for i in fees_type_list %}
+                 <option value={{i.id}}>{{i.name}}</option>
+             {% endfor %}
+        </select>
+        <p></p>
+         Select Semester: &nbsp;  
+        <select name="semester">
+             {% for i in stream_dict.keys %}
+                 <option value="{{i}}">{{i}}</option>
+             {% endfor %}
+        </select>
+        <p></p>
+         Select Stream:  &nbsp;&nbsp;&nbsp;&nbsp;
+        <select name="stream">
+             {% for i in stream_list %}
+                 <option value="{{i.id}}">{{i.name}}</option>
+             {% endfor %}
+        </select>
+        <p></p>
+       
+        <input type="submit" value="Search">
+    </form>
+</div>
+<p></p>
+
+ 
+
+
+
+<table border="2" cellspacing="2" cellpadding="20">
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+
+    {% if fee_obj_list %}
+        <tr>
+            
+            <td><h3>Fees Type</h3></td>
+            <td><h3>Amount</h3></td>
+            <td><h3>Academic</h3></td>
+            <td><h3>Stream</h3></td>
+            <td><h3>semister</h3></td>
+             <td><h3>Active</h3></td>
+            <td><h3>Action</h3></td>
+        </tr>
+         
+
+    {% for i in fee_obj_list %}
+                    
+        <tr>
+            <td>
+            {{i.fees_type}}<p></p>
+            </td>
+             
+            <td>
+            {{i.amount}}<p></p>
+            </td>
+            
+             <td>
+            {{i.academic}}<p></p>
+            </td>
+             
+            <td>
+            {{i.semister.stream}}<p></p>
+            </td>
+             
+            <td>
+            {{i.semister}}<p></p>
+            </td>
+            <td>
+            {{i.is_active}}<p></p>
+            </td>
+              
+            <td>
+            <a class="various fancybox.iframe" href="#" onclick="confirm_box2('/fms/manage/fees/edit/{{i.id}}/')">Edit</a>
+            &nbsp;&nbsp;&nbsp;&nbsp{%if i.is_active%}<a href="#" onclick="confirm_box('/fms/manage/delete/?fee_id={{i.id}}')">Delete</a>{% endif %}<p></p>
+            &nbsp;&nbsp;&nbsp;&nbsp<a href="/fms/manage/fees_schedule/{{i.id}}">Manage Schedule</a><p></p>
+            &nbsp;&nbsp;&nbsp;&nbsp{{i.payment_type}}&nbsp;&nbsp{{i.installments}}
+            </td>
+        </tr>
+      
+    {% endfor %}
+ 
+   {% endif %}
+</table>
+<p></p>
+<div>
+    <a class="various fancybox.iframe" href="/fms/manage/fees/add/"><h4>Add Fees</h4></a>
+</div>
+<p></p>
+<br>
+    
+
+</table>
+
+{{ins_obj}}
+{% endblock %}

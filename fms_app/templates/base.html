@@ -1,0 +1,471 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+	<title>{% block title %}Bangalore Cares Admin{% endblock %}</title>
+
+	<style type="text/css">
+		.contenttable {text-align:left;width:950px;}
+		.tabletop {text-align:left;padding-left:8px;font-weight:bold;font-size:16px;}
+	</style>
+
+	<link href="/static/css/bysstyle.css" rel="stylesheet" type="text/css" />
+
+	<script type="text/css" src="/static/css/bysstyle.css"></script>
+
+	<script type="text/javascript" src="/static/js/jquery.js"></script>
+	<script type="text/javascript" src="/static/js/jquery.cycle.lite.1.0.min.js"></script>
+	
+	<script type="text/javascript" src="/static/js/jquery-1.8.2.min.js"> </script>
+	<script type="text/javascript" src="/static/js/jquery.tablesorter.js"></script>
+	
+	
+	
+	
+
+	
+	
+
+	
+	<script type="text/javascript" src="/static/js/jquery.mousewheel-3.0.4.pack.js"></script>
+	<script type="text/javascript" src="/static/fancybox/jquery.fancybox.js"></script>
+	<link rel="stylesheet" type="text/css" href="/static/fancybox/jquery.fancybox.css" media="screen" />
+	<script type="text/javascript" src="/static/fancybox/jquery.fancybox.pack.js"></script>
+	<link rel="stylesheet" href="style.css" />
+	
+	
+	
+	
+	
+		<script type="text/javascript">
+		function close_window()
+		{
+			window.close();
+			if (window.opener && !window.opener.closed)
+			{
+				window.opener.location.reload();
+			}
+		}
+	</script>
+		
+		
+
+	
+
+	
+	
+	
+    <link href="/static/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+	<!--script>
+	$(document).ready(function() {
+        	$('table.atable').tablesorter({sortList: [[0,0]], locale: 'de', widgets: ['zebra'], useUI: true});	
+	});
+	</script-->
+
+	<script type="text/javascript">//Amol--
+		function add_record_popup(url,title)
+		{
+			newwindow=window.open(url,title,'scrollbars=1,height=500,width=500');//here second argument(i.e url name) is compulsory otherwise it will opn in new tab
+			newwindow.focus()		
+			return false;
+		}
+		function edit_record_popup(url,title)
+		{
+			newwindow=window.open(url,title,'scrollbars=1,height=500,width=500');//here second argument(i.e url name) is compulsory otherwise it will opn in new tab
+			newwindow.focus()
+			return false;
+		}
+	
+	
+	</script>
+	
+        <script>
+	function clearText(thefield){
+	if (thefield.defaultValue==thefield.value)
+	thefield.value = ""
+	} 
+        </script>
+
+
+
+	<script type="text/javascript">
+
+	
+	function surveypopup(url)
+	{
+		window.open(url,"Add Survey","status=1,height=700,width=660,left=500,top=250,scrollbars=yes,resizable=0")
+	}
+	function productpopup(url)
+	{
+		window.open(url,"Add Survey","status=1,height=780,width=780,left=500,top=250,scrollbars=yes,resizable=0")
+	}
+	</script>
+
+	
+	
+	
+	<script type="text/javascript">
+	function confirm_box(url)
+	{
+		var r=confirm("Are you sure want to deactivate ?");
+		if (r==true)
+		{
+			window.location=url
+		}
+	}
+	function confirm_box2(url)
+	{
+		var r=confirm("If you edit this fee then all the scheduled installments will be deleted you wil have to reconfigure it \n Do u want to proceed ?");
+		if (r==true)
+		{
+			window.location=url
+		}
+	}
+	
+	
+	</script>
+	<script language="javascript" type="text/javascript">
+//tinyMCE.init({
+//        theme : "advanced",
+//        mode : "textareas"
+//});
+</script>
+<script language="javascript" type="text/javascript">
+$(document).ready(function() {
+	$(".various").fancybox({
+		maxWidth	: 800,
+		maxHeight	: 600,
+		fitToView	: false,
+		width		: '80%',
+		height		: '80%',
+		autoSize	: false,
+		closeClick	: false,
+		openEffect	: 'none',
+		closeEffect	: 'none'
+	});
+});
+</script>
+
+
+<!--	<link href="/static/css/jquery.datepick.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript">
+$(document).ready(function()
+{
+$( "#valid_from" ).datepick({
+dateFormat: 'dd-mm-yyyy',
+changeMonth: true,
+changeYear: true,
+});
+});
+</script>-->
+
+
+</head>
+
+
+<body>
+
+	<div class="container">
+	  <div class="top" style="background:#289234;">
+		<div class="topbar" >
+		    <div class="topbar">
+		        <div class="logo"> <a href="/manage-home/"><img src="/static/images/logo.gif" alt="" height=45 width=220 /></a></div>
+		        <div class="login" style="width:42%;">
+		            <div style="float:right;">
+		                {% if not user.is_authenticated %}
+							
+							<div class="my-txt">
+							<a href="/adm-login/">Sign in</a> 
+							</div>
+						{% else %}
+							<div class="my-txt">Welcome, {{ins_obj.name}} | 
+							 <a href="/fms/logout/">Sign out</a></div>
+						{% endif %}
+		            </div>
+				</div>
+		    </div>
+			{% block menubar %}
+		         <div style="padding:0px 0 20px 45px;float:right;">
+		           <div class="nav1">
+		                <ul id="jsddm">
+		                
+	         	                	                		                	                
+		                
+		                           <li><a href="#">Manage</a>
+		                                <ul>
+		                                    <li><a href="/fms/manage/fees_type/">Fees Type</a></li>
+		                                    <li><a href="{% url 'manage_levels'%}">Levels</a></li>
+		                                    <li><a href="/fms/manage/fees/">Fees</a></li>
+		                                    <li><a href="/fms/manage/student_fees/">Student Fees</a></li>
+		                                    <li><a href="/fms/manage/fine_type/">Fine Type</a></li>
+		                                    <li><a href="/fms/manage/fees_schedule/">Fees Scheduling</a></li>
+		                                    <li><a href="/manage/?key=donation">Donation</a></li>
+		                                    <li><a href="/manage/bcevents/">Event</a></li>
+		                                    <li><a href="/manage/?key=faq">FAQ</a></li>
+		                                    <li><a href="/manage/?key=fundraisers">Fundraisers</a></li>
+		                                    <li><a href="/manage/?key=gallery">Gallery</a></li>
+		                                    <li><a href="/manage/?key=home-banner">Home Banner</a></li>
+		                                    <li><a href="/manage/?key=job">Job</a></li>
+		                                    <li><a href="/manage/?key=need">Need</a></li>
+		                                    <li><a href="/manage/?key=news">News</a></li>
+		                                    <li><a href="/manage/?key=ngo">NGO</a></li>
+		                                    <li><a href="/user/?key=staff">Our Team</a></li>
+		                                    <li><a href="/manage/?key=project">Projects</a></li>
+		                                    <li><a href="/manage/?key=volunteer">Volunteer Requirements</a></li>
+		                                    <li><a href="/manage/news/">NewsRoom</a></li>
+		                                </ul>
+		                            </li>
+		                            <li><a href="#">Users</a>
+		                                <ul>
+		                                    <li><a href="/user/?key=users">Users Profile</a></li>
+		                                    
+		                                </ul>
+		                            </li>
+		                            <li><a href="#">Configure</a>
+		                                <ul>
+		                                    <!--li><a href="/configure/?key=activity-type">Activity Type</a></li-->
+		                                    <li><a href="/configure/?key=ngo-categories">Subjects</a></li>
+		                                    <li><a href="/configure/?key=section">Qualifications</a></li>
+						    <li><a href="/configure/?key=section">Positions</a></li>
+		                                 </ul>
+		                            </li>
+		                            <li><a href="#">Reports</a>
+		                            	<ul>
+		                            	    <li><a href="/corporate-report/">Corporate</a></li>
+		                            		<li><a href="/donation-report/?key=donation">Donation</a></li>
+		                            		<li><a href="/fundraising-report/">Fundraising</a></li>
+		                            		<li><a href="/ngo-report/">NGO Activities</a></li>
+		                            		<li><a href="/volunteer-report/">Volunteer</a></li>
+		                            	</ul>
+		                            </li>
+		                		</ul>
+		           			</div>
+						</div>
+					{% endblock %}
+				</div>
+			</div>
+		</div>
+		<div class="main">
+			<div class="mid">
+			
+			
+		{% block midpart %}
+		
+			{% if new_corporates %}
+			<h2> New Corporates Registered</h2>
+			<table border="1" cellspacing="0" cellpadding="5" class="contenttable " style="margin-bottom:10px;">		
+					<tr>
+					    <th>Title</th>
+					    <th>Status</th>
+					    <th>Created On</th>
+					    <th></th>
+					</tr>
+					{% for corp in new_corporates %}
+						<tr>
+							<td>{{corp.title}}</td>
+							<td>{% if corp.is_active %} Active {% else %} Inactive {% endif %}</td>
+							<td>{{corp.created_on}}</td>
+							<td><a href="#" onclick="productpopup('/manage/edit-corporate/?corp_id={{corp.id}}')">Edit</a></td>
+						</tr>
+					{% endfor %}
+			</table>
+			{% endif %}
+			
+			
+			{% if updated_corporates %}
+			<h2>Corporates Updated Profile</h2>
+			<table border="1" cellspacing="0" cellpadding="5" class="contenttable " >		
+					<tr>
+					    <th>Title</th>
+					    <th>Status</th>
+					    <th>Updated On</th>
+					</tr>
+					{% for corp in updated_corporates %}
+						<tr>
+							<td>{{corp.title}}</td>
+							<td>{% if corp.is_active %} Active {% else %} Inactive {% endif %}</td>
+							<td>{{corp.modified_on}}</td>
+						</tr>
+					{% endfor %}
+			</table>
+			{% endif %}
+			
+			
+			{% if new_individual %}
+			<h2> Individuals Registered</h2>
+			<table border="1" cellspacing="0" cellpadding="5" class="contenttable " >		
+					<tr>
+					    <th>Name</th>
+					    <th>Email</th>
+					    <th>Status</th>
+					    <th>Registered On</th>
+					   
+					</tr>
+					{% for ind in new_individual %}
+						<tr>
+							<td>{{ind.title}} {{ind.user.first_name}} {{ind.user.last_name}}</td>
+							<td>{{ind.user.email}}</td>
+							<td>{% if ind.is_active %} Active {% else %} Inactive {% endif %}</td>
+							<td>{{ind.created_on}}</td>
+							<!--<a href="#" onclick="productpopup('/manage/edit-individual/?usr_id={{ind.id}}')">Edit</a> -->
+								
+							
+						</tr>
+					{% endfor %}
+			</table>
+			{% endif %}
+			
+			
+			
+			
+			{% if updated_individual %}
+			<h2> Individuals Updated Profile </h2>
+			<table border="1" cellspacing="0" cellpadding="5" class="contenttable " >		
+					<tr>
+					    <th>Name</th>
+					    <th>Email</th>
+					    <th>Status</th>
+					    <th>Updated On</th>
+					</tr>
+					{% for ind in updated_individual %}
+						<tr>
+							<td>{{ind.title}} {{ind.user.first_name}} {{ind.user.last_name}}</td>
+							<td>{{ind.user.email}}</td>
+							<td>{% if ind.is_active %} Active {% else %} Inactive {% endif %}</td>
+							<td>{{ind.modified_on}}</td>
+						</tr>
+					{% endfor %}
+			</table>
+			{% endif %}
+			
+			
+			
+			{% if new_ngo %}
+			<h2> New NGO Registered </h2>
+			<table border="1" cellspacing="0" cellpadding="5" class="contenttable " >		
+					<tr>
+					    <th>Name</th>
+					    <th>Status</th>
+					    <th>Registered On</th>
+					    <th></th> 	
+					</tr>
+					{% for ngo in new_ngo %}
+						<tr>
+							<td>{{ngo.name}} </td>
+							
+							<td>{% if ngo.is_active %} Active {% else %} Inactive {% endif %}</td>
+							<td>{{ngo.created_on}}</td>
+							<td><a href="#" onclick="productpopup('/manage/edit-ngo/?ngo_id={{ngo.id}}')">Edit</a> 
+								
+							</td></td>
+						</tr>
+					{% endfor %}
+			</table>
+			{% endif %}
+			
+			
+			
+			{% if updated_ngo %}
+			<h2> NGO Updated Profile </h2>
+			<table border="1" cellspacing="0" cellpadding="5" class="contenttable " >		
+					<tr>
+					    <th>Name</th>
+					    <th>Status</th>
+					    <th>Updated On</th>
+					</tr>
+					{% for ngo in updated_ngo %}
+						<tr>
+							<td>{{ngo.name}} </td>
+							
+							<td>{% if ngo.is_active %} Active {% else %} Inactive {% endif %}</td>
+							<td>{{ngo.modified_on}}</td>
+						</tr>
+					{% endfor %}
+			</table>
+			{% endif %}
+			
+			
+			
+			{% if applied_volunteer %}
+			<h2> Volunteers Applied Today </h2>
+			<table border="1" cellspacing="0" cellpadding="5" class="contenttable " >		
+					<tr>
+					    <th>Name</th>
+					    <th>Status</th>
+					    <th>Skills</th>
+					    <th>Location</th>
+					    <th></th>
+					</tr>
+					{% for vol in applied_volunteer %}
+						<tr>
+							<td>{{vol.name}} </td>
+							
+							<td>{% if vol.is_active %} Active {% else %} Inactive {% endif %}</td>
+							<td>{{vol.skills}}</td>
+							<td>{{vol.location}}</td>
+							<td><td width="15%"><a href="#" onclick="productpopup('/manage/edit-appliedVolunteer/?vol_id={{vol.id}}')">Edit</a></td>
+						</tr>
+					{% endfor %}
+			</table>
+			{% endif %}
+			{% if applied_jobs %}
+			<h2> Jobs Applied Today </h2>
+			<table border="1" cellspacing="0" cellpadding="5" class="contenttable " >		
+					<tr>
+					    <th>Name</th>
+					    <th>Status</th>
+					    <th>Skills</th>
+					    <th>Location</th>
+					</tr>
+					{% for appl in applied_jobs %}
+						<tr>
+							<td>{{appl.name}} </td>
+							
+							<td>{% if appl.is_active %} Active {% else %} Inactive {% endif %}</td>
+							<td>{{appl.skills}}</td>
+							<td>{{appl.location}}</td>
+						</tr>
+					{% endfor %}
+			</table>
+			{% endif %}
+			
+				 {% endblock %}
+			</div>
+		<div>
+		<div class="nav"></div>
+	</div>
+</body>
+
+
+<script type="text/javascript">
+var timeout         = 500;
+var closetimer		= 0;
+var ddmenuitem      = 0;
+
+function jsddm_open()
+{	jsddm_canceltimer();
+	jsddm_close();
+	ddmenuitem = $(this).find('ul').eq(0).css('visibility', 'visible');}
+
+function jsddm_close()
+{	if(ddmenuitem) ddmenuitem.css('visibility', 'hidden');}
+
+function jsddm_timer()
+{	closetimer = window.setTimeout(jsddm_close, timeout);}
+
+function jsddm_canceltimer()
+{	if(closetimer)
+	{	window.clearTimeout(closetimer);
+		closetimer = null;}}
+
+$(document).ready(function()
+{	$('#jsddm > li').bind('mouseover', jsddm_open);
+	$('#jsddm > li').bind('mouseout',  jsddm_timer);});
+
+document.onclick = jsddm_close;
+</script>
+
+
+</html>

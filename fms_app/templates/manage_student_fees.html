@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+
+
+
+{% block title %}Manage Student Fees {% endblock %}
+
+{% block midpart %}
+
+
+
+    <script type="text/javascript">
+    $(document).ready(function()
+        {
+
+             $('<option>',{value:''}).html('select semester').appendTo("#semester_id")
+            $("#stream_id").change(function()
+                {
+
+                    $("#semester_id option ").remove();
+                    var stream = $("#stream_id").val();
+                    $.ajax(
+                        {
+                            type : "GET",
+                            url : "/fms/manage/student_fees/",
+                            data :"sid="+stream ,
+                            success : function(data)
+                            {
+
+                                if (data)
+                                {
+                                    var res = data.res
+
+                                    for (i=0;i<res.length;i++)
+                                    {
+                                        $('<option>', {value : res[i].id }).html(res[i].name).appendTo('#semester_id');
+                                    }
+                                }
+
+                            }
+                        }
+                    )
+                });
+        });
+</script>
+
+
+<h2>Student Fees</h2>
+
+
+<div>
+    <form action="/fms/manage/student_fees/"  method="POST">
+        {% csrf_token %}
+
+       <p></p>
+
+        Select Fee Type: &nbsp;
+        <select name="fees_type">
+             {% for i in fees_type_list %}
+                 <option value={{i.id}}>{{i.name}}</option>
+             {% endfor %}
+        </select>
+        <p></p>
+         Select Stream:  &nbsp;&nbsp;&nbsp;&nbsp;
+        <select id="stream_id" name="stream">
+             {% for i in stream_list %}
+                 <option value={{i.id}}>{{i.name}}</option>
+             {% endfor %}
+        </select>
+       <p></p>
+         Select Semester: &nbsp;
+
+        <select id="semester_id" name="semester">
+
+
+        </select>
+        <p></p>
+         Enter Name: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+       <input type="text" name="student_name">
+
+        <p></p>
+
+        <input type="submit" value="Search">
+    </form>
+</div>
+<p></p>
+
+
+
+
+<table border="2" cellspacing="2" cellpadding="20">
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+
+    {% if student_list %}
+        <tr>
+
+            <td><h3>Student</h3></td>
+            <td><h3>Fee Type</h3></td>
+            <td><h3>Amount</h3></td>
+            <td><h3>Fee Status</h3></td>
+            <td><h3>Stream</h3></td>
+            <td><h3>Action</h3></td>
+
+        </tr>
+
+    {% for i in student_list %}
+
+        <tr>
+
+
+            <td>
+            {{i.student}}<p></p>
+            </td>
+
+            <td>
+            {{i.fee.fees_type.name}}<p></p>
+            </td>
+
+            <td>
+            {{i.fee.amount}}<p></p>
+            </td>
+
+            <td>
+            {{i.status}}<p></p>
+            </td>
+
+            <td>
+            {{i.fee.semister}}<p></p>
+            </td>
+
+            <td>
+               {% ifnotequal i.status 'paid' %}
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="various fancybox.iframe" href="/fms/manage/student_fees/pay/{{i.id}}/" >pay</a>
+            {% endifnotequal %}
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="various fancybox.iframe" href="/fms/manage/student_fees/payment_details/{{i.id}}/" >view details</a>
+
+            </td>
+
+        </tr>
+    {% endfor %}
+    {% endif %}
+</table>
+<p></p>
+<div>
+    <a class="various fancybox.iframe" href="/fms/manage/student_fees/add/"><h4>Add Student Fees</h4></a>
+</div>
+
+<p></p>
+<br>
+
+
+</table>
+
+{{ins_obj}}
+{% endblock %}

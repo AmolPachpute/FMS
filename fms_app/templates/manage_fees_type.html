@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Manage Fee Structures{% endblock %}
+    
+{% block midpart %}
+<h2>Fee Type</h2>
+<table border="2" cellspacing="2" cellpadding="30">
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+{{ins_obj}}
+    {% if ins_obj %}
+        <tr>
+            
+            <td><h3>Fees Type</h3></td>
+            <td><h3>Active</h3></td>
+            <td><h3>Action</h3></td>
+        </tr>
+
+    {% for i in ins_obj.get_fees_type_object %}
+        
+        <tr>
+            
+             
+            <td>
+
+            {{i.name}}<p></p>
+
+            </td>
+             
+            <td>
+            
+            {{i.is_active}}<p></p>
+         
+            </td>
+              
+            <td>
+                
+            <a class="various fancybox.iframe" href="/fms/manage/edit_fee_type/{{i.id}}/" >Edit</a>
+            
+            {%if i.is_active %}
+            &nbsp;&nbsp;&nbsp;&nbsp<a href="#" onclick="confirm_box('/fms/manage/delete/?ftype_id={{i.id}}')" >Deactivate</a><p></p>
+           
+           {% endif %}
+            </td>
+           
+        </tr>
+    {% endfor %}
+    {% endif %}
+</table>
+<p></p>
+<div>
+    <a class="various fancybox.iframe" href="/fms/manage/add_fee_type/"><h4>Add Fees Type</h4></a>
+</div>
+
+<p></p>
+<br>
+    
+
+</table>
+
+
+{% endblock %}

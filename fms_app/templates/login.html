@@ -1,0 +1,42 @@
+<html>
+    <head>
+       <title>Fee Structure Login</title>
+    </head>
+    
+<body>
+{% block contents %}
+    {% if errors %}
+        {% for i in errors.values%}
+        <div style="color:red"><h3>{{i}}</h3></div>
+        {% endfor %}
+    {% endif %}
+    
+<form action="{% url 'fms_login' %}" method="post">
+    <table align="center">
+        {% csrf_token %}
+        <tr>
+            <td>Username</td>
+            <td><input type="text" name="username" </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><h3 style="color:red;">{{form.username.errors}}</h5></td>
+        </tr>
+        <tr>
+            <td>Password</td>
+            <td><input type="password" name="password" </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><h3 style="color:red;">{{form.password.errors}}</h5></td>
+        </tr>
+       
+    
+       
+    </table>
+    <input type="submit" value="Login In">
+</form>
+
+{% endblock %}
+</body>
+</html>

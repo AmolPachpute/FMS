@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+
+{% block title %}Manage Fine Type{% endblock %}
+    
+{% block midpart %}
+<h2>Fine Type</h2>
+<table border="2" cellspacing="2" cellpadding="30">
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+{{ins_obj}}
+    {% if ins_obj %}
+        <tr>
+            
+            <td><h3>Fine Type</h3></td>
+            <td><h3>Description</h3></td>
+            <td><h3>Fine Amount</h3></td>
+            <td><h3>Active</h3></td>
+            <td><h3>Action</h3></td>
+        </tr>
+
+    {% for i in ins_obj.get_fine_type %}
+        
+        <tr>
+            
+             
+            <td>
+            {{i.name}}<p></p>
+            </td>
+            
+            <td>
+            {{i.description}}<p></p>
+            </td>
+             
+             <td>
+            {{i.fine_amount}}<p></p>
+            </td>
+             
+            <td>
+            
+            {{i.is_active}}<p></p>
+         
+            </td>
+              
+            <td>
+                
+            <a class="various fancybox.iframe" href="/fms/manage/fine_type/edit/{{i.id}}/" >Edit</a>
+            
+            {%if i.is_active %}
+            &nbsp;&nbsp;&nbsp;&nbsp<a href="/fms/manage/delete/?fine_type_id={{i.id}}" onclick="confirm_box('/fms/manage/delete/?fine_type_id={{i.id}}')" >Deactivate</a><p></p>
+           
+           {% endif %}
+            </td>
+           
+        </tr>
+    {% endfor %}
+    {% endif %}
+</table>
+<p></p>
+<div>
+    <a class="various fancybox.iframe" href="/fms/manage/fine_type/add/"><h4>Add Fine Type</h4></a>
+</div>
+
+<p></p>
+<br>
+    
+
+</table>
+
+
+{% endblock %}

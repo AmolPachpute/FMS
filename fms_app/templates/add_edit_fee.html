@@ -1,0 +1,321 @@
+{% extends 'form_base.html'%}
+
+
+
+{% block midpart %}
+
+	<script type="text/javascript" src="/static/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="/static/js/jquery-2.0.3.min.js"> </script>
+	<script type="text/javascript" src="/static/js/jquery.tablesorter.js"></script>
+
+<script type="text/javascript">    //for stream and semester
+    $(document).ready(function()
+        {
+
+            $("#id_fees_type").change(function()
+            {
+
+                $("#id_semester").hide();
+		$("#semester_label").hide();
+		$("#stream_id")[0].selectedIndex=0;
+
+
+            });
+
+        });
+</script>
+
+
+<script type="text/javascript">    //for stream and semester
+    $(document).ready(function()
+        {
+            $("#id_semester").hide();
+            $("#semester_label").hide();
+
+            $("#stream_id").change(function()
+            {
+                $("#id_semester").show();
+                 $("#semester_label").show();
+                $("#id_semester option").remove();
+                $('<option>',{value:''}).html('select semester').appendTo("#id_semester")
+                var stream_id = $("#stream_id").val();
+		alert("stream_id="+stream_id)
+		var fees_type_id = $("#id_fees_type").val();
+		alert("fee_type_id="+fees_type_id)
+
+                $.ajax({
+                         type: "GET",
+                         url: "/fms/manage/fees/get_semester/",
+                         data: "sid="+stream_id + "&fees_type_id="+fees_type_id,
+                         success: function(data) {
+                                 if(data){
+                                    var res = data.res
+                                    for(i = 0; i < res.length; i++){
+                                        $('<option>', {value : res[i].id }).html(res[i].name).appendTo('#id_semester');
+                                    }
+                                 }
+                         }
+                     });
+            });
+
+        });
+</script>
+
+
+<script type="text/javascript">  //for payment type,minimum first payment and no.of installments
+    $(document).ready(function()
+        {
+
+            $("#min_pay").hide();
+            $("#installments").hide();
+
+            $("#payment_type").change(function()
+            {
+                alert($('#payment_type').val())
+                if ($('#payment_type').val()=="recursive")
+                {
+                    $("#min_pay").show();
+                    $("#installments").show();
+                }
+                else
+                {
+                    $("#min_pay").hide();
+                    $("#installments").hide();
+                }
+
+
+            });
+
+        });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% if fee_id %}
+    <h2>Edit fee</h2>
+{% else %}
+    <h2>Add fee</h2>
+{% endif %}
+
+
+<form action="{% if not fee_id %}/fms/manage/fees/add/{% endif %}" method="POST">
+{% csrf_token %}
+
+
+
+
+{% if record_added%}
+            <p style="color:green;" ><h1>Record added successfully</h1></p>
+{% elif record_updated %}
+            <p style="color:green;" ><h1>Record updated successfully</h1></p>
+{% else %}
+
+    <table border="0" cellspacing="5" cellpadding="5" style="width:620px;text-align:left;">
+
+                {% if fee_id %}
+                     <tr>
+                    <td>Fees Type:</td>
+                    <td>{{instance.fees_type}}</td>
+                    <td  style="display:none;">{{form.fees_type}}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td>Fees Type:</td>
+                    <td>{{form.fees_type}}</td>
+                </tr>
+                {% endif %}
+
+                <tr>
+                    <td></td>
+                    <td><p style="color:green;" >{{form.fees_type.errors}}</p></td>
+                </tr>
+
+
+
+                <tr>
+                    <td>Amount:</td><td>{{form.amount}}</td>
+                </tr>
+
+                  <tr>
+                    <td></td>
+                    <td><p style="color:green;" >{{form.amount.errors}}</p></td>
+                </tr>
+
+                {% if fee_id %}
+                    <tr>
+                    <td>Academic:</td><td>{{instance.academic}}</td>
+                    <td style="display:none;">{{form.academic}}</td>
+                </tr>
+                {% else %}
+                 <tr>
+                    <td>Academic:</td><td>{{form.academic}}</td>
+                </tr>
+                  {% endif %}
+                  <tr>
+                    <td></td>
+                    <td><p style="color:green;" >{{form.academic.errors}}</p></td>
+                </tr>
+
+                {% if fee_id %}
+
+                <tr>
+
+                    <td>Stream:</td>
+                    <td>
+                       {{instance.semister.stream}}
+                    </td>
+
+                     <td  style="display:none;">
+                        <select name = "stream" >
+                                <option value="{{instance.stream.id}}" selected>{{instance.semister.stream}}</option>
+                        </select>
+                    </td>
+                </tr>
+                {% else %}
+                 <tr>
+
+                    <td>Stream:</td>
+                    <td>
+                        <select id="stream_id" name='stream'>
+                        {% for i in ins_obj.getStreams%}
+                        {%if forloop.first %}
+                             <option>---------</option>
+                        {% endif %}
+
+                                <option value="{{i.id}}">{{i.name}}</option>
+                        {% endfor %}
+
+                        </select>
+                    </td>
+                </tr>
+                 {% endif %}
+
+
+                 {% if fee_id %}
+                <tr>
+                    <td>Semester:</td>
+                    <td>
+                       {{instance.semister}}
+                    </td>
+
+                    <td style="display:none;">
+                        <select name="semister" >
+                                <option value = "{{instance.semister.id}}">{{instance.semister}}</option>
+                            </select>
+                    </td>
+                </tr>
+
+                {% else %}
+                <tr>
+                    <td id="semester_label">Semester:</td>
+                    <td>
+                        <select name="semister" id="id_semester">
+                                <option value = "">Select semester</option>
+                            </select>
+                    </td>
+                </tr>
+                {% endif %}
+
+                 <tr>
+                    <td></td>
+                    <td><p style="color:green;" >{{form.semister.errors}}</p></td>
+                </tr>
+
+                {% if fee_id %}
+                    <tr>
+                    <td>Payment Type:</td>
+                     <td>
+                       {{instance.payment_type}}
+                    </td>
+
+
+                    <td  style="display:none;">
+                        <select name="payment_type">
+
+                            <option value="{{instance.payment_type}}" selected>{{instance.payment_type}}</option>
+
+                        </select>
+                    </td>
+                </tr>
+                {% else %}
+                 <tr>
+                    <td>Payment Type:</td>
+                    <td>
+                        <select id="payment_type" name="payment_type">
+                            <option>------</option>
+                            <option value="fixed">Fixed</option>
+                            <option value="recursive">Recursive</option>
+                        </select>
+                    </td>
+                </tr>
+                  {% endif %}
+
+                <tr>
+                    <td></td>
+                    <td><p style="color:green;" >{{form.payment_type.errors}}</p></td>
+                </tr>
+
+
+
+                {% if fee_id %}
+                    <tr>
+                    <td >{{form.fist_payment.label_tag}}</td><td>{{instance.fist_payment}}</td>
+                    <td style="display:none;">{{form.fist_payment}}</td>
+                </tr>
+                {% else %}
+                 <tr id="min_pay">
+                    <td >{{form.fist_payment.label_tag}}</td><td>{{form.fist_payment}}</td>
+                </tr>
+
+
+                <tr>
+                    <td></td>
+                    <td><p style="color:green;" >{{form.fist_payment.errors}}</p></td>
+                </tr>
+                {% endif %}
+
+
+                <tr id="installments">
+                    <td >{{form.installments.label_tag}}</td><td>{{form.installments}}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><p style="color:green;" >{{form.installments.errors}}</p></td>
+                </tr>
+
+                   <tr>
+                    <td>Is Active:</td><td>{{form.is_active}}</td>
+                </tr>
+
+                   <tr><td></td>
+                    <td>
+                         {% if form.non_field_errors %}
+                {% for i in form.non_field_errors%}
+                 <p style="color:red"> {{i}}</p>
+                {% endfor %}
+                {% endif %}
+                    </td>
+                   </tr>
+    </table>
+        {%if fee_id%}<input type="submit" value="Update">
+        {%else%}
+            <input type="submit" value="Add">
+        {% endif %}
+{% endif %}
+
+</form>
+
+
+{% endblock %}

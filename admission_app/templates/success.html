@@ -1,0 +1,54 @@
+
+
+{% extends 'form_base.html' %}
+
+
+
+
+
+
+
+{% block midpart %}
+                 
+                 
+	<script language="javascript"  type="text/javascript">
+               
+                 function validate()
+                 {
+                                var radios = document.getElementsByName("parent")
+                                status = "false";
+                                for (i=0;i<radios.length;i++)
+                                {
+                                  if (radios[i].checked)
+                                  {
+                                                   alert("inside if");
+                                     status = "true" ;
+                                     return true;
+                                  }
+                                  
+                                }
+                                if (status == "false")
+                                  {
+                                                   alert("inside 2 if");
+                                       alert("Please select atlest one guardian for emergency contact");
+                                       return false;
+                                  }
+                 }
+	</script>
+	
+            <h3 style="color:green">Guardian Added Successfully</h3>
+        <form action=""/admission/select_fees_types/"" method="POST" name="form1" onsubmit="return validate();">
+                 {% csrf_token %}
+                        <h2>Guardians list</h2>
+                         <h3>Select any one guardian as emergency contact</h3>
+                         
+                {% for parent in parents_list %}
+                                 <input type="radio" name="parent" value={{parent.id}}>{{parent}}<p></p>
+                                  
+                {% endfor %}
+                <input type="submit" value="Proceed">
+          </form>
+           <a href="/admission/add_parent_details/">Add Another Guardian</a>&nbsp;&nbsp;&nbsp;
+           &nbsp;&nbsp;<a href="/admission/select_fees_types" >Proceed</a>
+
+{% endblock %}

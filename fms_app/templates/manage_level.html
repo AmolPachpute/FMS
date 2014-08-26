@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Fee Structures{% endblock %}
+
+{% block midpart %}
+<h2>Levels</h2>
+<table border="2" cellspacing="2" cellpadding="6">
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+
+    {% if institution_obj %}
+        <tr>
+            <td><h3>Institution</h3></td>
+            <td><h3>Name</h3></td>
+            <td><h3>Description</h3></td>
+            <td><h3>Slug</h3></td>
+            <td><h3>Created by</h3></td>
+            <td><h3>Created On</h3></td>
+            <td><h3>Modified On</h3></td>
+            <td><h3>Status</h3></td>
+            <td><h3>Action</h3></td>
+        </tr>
+
+    {% for i in institution_obj %}
+        
+        <tr>
+            <td>{{i.name}}</td>
+             
+            <td>
+            {% for j in i.get_levels_object %}
+            {{j.name}}<p></p>
+            {% endfor %}
+            </td>
+             
+            <td>
+            {% for j in i.get_levels_object %}
+            {{j.description}}<p></p>
+            {% endfor %}
+            </td>
+            
+            
+            <td>
+            {% for j in i.get_levels_object %}
+            {{j.slug}}<p></p>
+            {% endfor %}
+            </td>
+            
+            <td>
+            {% for j in i.get_levels_object %}
+            {{j.created_by}}<p></p>
+            {% endfor %}
+            </td>
+            
+             
+            <td>
+            {% for j in i.get_levels_object %}
+            {{j.createdOn}}<p></p>
+            {% endfor %}
+            </td>
+            
+            <td>
+            {% for j in i.get_levels_object %}
+            {{j.modifiedOn}}<p></p>
+            {% endfor %}
+            </td>
+             
+            <td>
+            {% for j in i.get_levels_object %}
+            {{j.is_active}}<p></p>
+            {% endfor %}
+            </td>
+              
+            <td>
+            {% for j in i.get_levels_object %}
+            <a href="/fms/manage/level/edit/?level_id={{j.id}}" onclick="return edit_record_popup(href,'Edit Level')">Edit</a>
+            &nbsp;&nbsp;&nbsp;&nbsp<a href="/fms/manage/delete/?level_id={{j.id}}">Delete</a><p></p>
+            {% endfor %}
+            </td>
+           
+        </tr>
+    {% endfor %}
+    {% endif %}
+</table>
+<p></p>
+<div>
+    <a href="{% url 'add_level'%}" onclick="return add_record_popup(href,'Add Level')"><h4>Add Level</h4></a>
+</div>
+
+<p></p>
+<br>
+    
+
+</table>
+
+
+{% endblock %}

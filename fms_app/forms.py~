@@ -1,0 +1,82 @@
+from django import forms
+from fms_app.models import *
+from schools.models import *
+class loginform(forms.Form):
+    username = forms.CharField(max_length=100)
+    password = forms.CharField(max_length=20)
+class addfeetypeform(forms.ModelForm):
+    class Meta:
+        model = Fees_Type
+        exclude = ('institution',)
+class addlevelsform(forms.ModelForm):
+    class Meta:
+        model = Level
+
+class addfeeform(forms.ModelForm):
+    class Meta:
+        model = Fee
+        exclude = ('institution',)
+    def clean(self, ):
+        cleaned_data = super(addfeeform,self).clean()
+        payment_mode = cleaned_data.get('payment_type')
+        first_payment = str(cleaned_data.get('fist_payment'))
+        academic_year = str(cleaned_data.get('academic'))[0:4]
+        curr_academic_year = str(current_academic())[0:4]
+
+        if academic_year != curr_academic_year:
+             raise forms.ValidationError("year should be current academic year")
+
+        if payment_mode == "recursive":
+            installments = cleaned_data.get('installments')
+            if not first_payment:
+                    raise forms.ValidationError("Please Enter Minimum \
+                                first payment for recursive payment type")
+            else:
+                amount = cleaned_data.get('amount')
+                if first_payment >= amount:
+                    raise forms.ValidationError("Minimum first payment should \
+                                be less than  Amount")
+
+            if not installments:
+                    raise forms.ValidationError("Please Enter installments \
+                                    for recursive payment type")
+        return cleaned_data #clean method shud always return something mostly cleaned_data
+
+class addstudentfeeform(forms.ModelForm):
+    class Meta:
+        model = Student_fees
+        exclude = ('institution',)
+        
+class addfinetypeform(forms.ModelForm):
+    class Meta:
+        model = Fine_type
+        exclude = ('institution',)
+
+class addfeescheduleform(forms.ModelForm):
+    class Meta:
+        model = Fees_schedule
+        exclude = ('institution','fee','created_by')
+
+    def clean(self, ):
+        cleaned_data = super(addfeescheduleform,self).clean()
+        start_date = cleaned_data.get('start_date','')
+        end_date = cleaned_data.get('end_date','')
+
+        if start_date >= end_date:
+            raise forms.ValidationError("Start date should be less than end date")
+        return cleaned_data
+        #clean method shud always return something mostly cleaned_data
+
+    
+
+
+
+
+
+    
+    
+
+
+    
+    
+    

@@ -1,0 +1,963 @@
+''' views for fms module '''
+
+from django.shortcuts import render
+from forms import *
+from django.contrib.auth import authenticate, login
+from fms_app.models import Fee , Fees_schedule , Fees_Type , Fine_type , \
+Level , Permission , Student_fees , User_permission , Student_payment , \
+Student_payment
+from schools.models import Institution , Stream , \
+Academic_Year , Student , StudentGroup , Student_StudentGroupRelation
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect, HttpResponse , HttpRequest
+from django.contrib.auth.models import User
+from django.contrib.auth import logout
+import json
+
+
+def login_check(request):
+    ''' login check '''
+
+    errors = {}
+    form = LoginForm()
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            user_obj = ''
+            try:
+                user_obj = User.objects.get(username=username)
+            except Exception:
+                pass
+            if user_obj and user_obj.check_password(password):
+                ins_obj = check_user_in_institution(user_obj)
+                if ins_obj:
+                    user = authenticate(username=username, password=password)
+                    if user:
+                        if user.is_active:
+                            login(request, user)
+                            request.session['ins_id'] = ins_obj.id
+                            return render(request, 'base.html', locals())
+                        else:
+                            errors['user_not_active'] = \
+                                'This User is not active'
+                else:
+                    errors['User_not_in_institute'] = \
+                        'User does not belong to any institute'
+            else:
+                errors['invalid_login'] = \
+                    'Username and Password did not match'
+    return render(request, 'login.html', locals())
+
+
+def check_user_in_institution(user_obj):
+    ''' check wheather user is present in that institution '''
+
+    user = ''
+    ins_obj = ''
+    try:
+        user = User_permission.objects.get(user=user_obj)
+        ins_obj = user.institution
+    except Exception:
+        pass
+    return ins_obj
+
+def logout_user(request):
+    logout(request)
+    return HttpResponse('<html><body><h3>Logged Out</h3><a href="/fms/">Login Here</a></body></html'
+                            '>')
+
+@login_required
+def manage_fees_type(request):
+    ''' diaplays all records for fees_type model '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(id=ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    if not ins_obj:
+        errors['no_records_to_display'] = 'No records to display'
+    return render(request, 'manage_fees_type.html', locals())
+
+@login_required
+def manage_fees(request):
+    ''' diaplays all records for fees model '''
+
+    errors = {}
+    ins_id = None
+    ins_obj = None
+    fees_type_list = []
+    stream_list = []
+    fee_obj_list = []
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(id=ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    fees_type_list = Fees_Type.objects.filter(institution=ins_obj)
+    stream_list = Stream.objects.filter(institution=ins_obj)
+    fee_obj_list = Fee.objects.filter(fees_type__institution_id=ins_id)
+    stream_dict = {}
+    for i in fee_obj_list:
+        stream_dict[i.semister.name] = i.semister.id
+
+    # fee_obj_list=[]
+    # for i in fees_type_list:
+    #    obj = Fee.objects.filter(fees_type=i)
+    #    for j in obj:
+    #        fee_obj_list.append(j)
+    #
+    ################for search ###########
+    payment_type = request.GET.get('status')
+    fees_type = request.GET.get('fees_type')
+    semester = request.GET.get('semester')
+    stream = request.GET.get('stream')
+    if fees_type and semester and stream:
+        fee_obj_list = \
+            fee_obj_list.filter(semister__name__icontains=semester,
+                                fees_type_id=int(fees_type),
+                                semister__stream_id=int(stream),
+                                payment_type__icontains=payment_type)
+    ########################################
+
+    if not fee_obj_list:
+        errors['no_records_to_display'] = 'No records to display'
+    return render(request, 'manage_fees.html', locals())
+
+@login_required
+def manage_student_fees(request):
+    ''' diaplays all records for student_fees model '''
+
+    errors = {}
+    ins_obj = None
+    stream_dict = {}
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(id=ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+
+
+    fees_type_list = Fees_Type.objects.filter(institution = ins_obj).distinct()
+    # OR  Fees_Type.objects.filter(institution = ins_obj).values('name')
+    stream_list = Stream.objects.filter(institution=ins_obj)
+
+    fee_obj_list = Fee.objects.filter(fees_type__institution_id = ins_id)
+    for i in fee_obj_list:
+        stream_dict[i.semister.name] = i.semister.id
+
+    ######################################
+    if request.method == "GET":
+        student_list = Student_payment.objects.filter(fee__fees_type__institution = ins_obj)
+
+    ########## for search ###########
+    if request.method == 'POST':
+        student_name = request.POST.get('student_name')
+        fees_type_id = int(request.POST.get('fees_type'))
+        semester_id = request.POST.get('semester')
+        stream_id = int(request.POST.get('stream'))
+        if fees_type_id and semester_id and stream_id:
+            student_sg_list = Student_StudentGroupRelation.objects.filter(student_group__id = semester_id , student_group__institution = ins_obj)
+            student_list = []
+            fees_type_obj = Fees_Type.objects.get(id = fees_type_id)
+            for i in student_sg_list:
+                for j in Student_payment.objects.filter(student = i.student , \
+                                                        student__child__first_name__icontains = student_name ,\
+                                                        fee__fees_type = fees_type_obj , \
+                                                        fee__semister__stream__id = stream_id):
+                    student_list.append(j)
+    #################################
+
+    if request.is_ajax():
+        results = {}
+        stream_id = int(request.GET.get('sid'))
+        try:
+            stream_obj = Stream.objects.get(id=stream_id)
+            sg_list = StudentGroup.objects.filter(institution = ins_obj , stream = stream_obj).values('id','name')
+        except Exception:
+            pass
+        results['res'] = [i for i in sg_list]
+        return HttpResponse(json.dumps(results), mimetype = 'application/json')
+    if not student_list:
+        errors['no_records_to_display'] = 'No records to display'
+    return render(request, 'manage_student_fees.html', locals())
+
+
+def manage_fine_type(request):
+    ''' diaplays all records for fine_type '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(id = ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+
+    if not ins_obj:
+        errors['no_records_to_display'] = 'No records to display'
+    return render(request, 'manage_fine_type.html', locals())
+
+
+def manage_fees_schedule(request, fee_id):
+    ''' diaplays all records for fees_schedule '''
+
+    errors = {}
+    fee_sh_list=[]
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(id = ins_id)
+        fee_obj = Fee.objects.get(id = fee_id)
+        fee_sh_list = Fees_schedule.objects.filter(institution = ins_obj,
+                fee = fee_obj , is_active = True)
+    except Exception:
+        errors['no_records_to_display'] = 'No records to display'
+    return render(request, 'manage_fee_schedule.html', locals())
+
+def add_fee_type(request):
+    ''' add record for fee type'''
+
+    form = FeeTypeForm()
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk = ins_id)  # put this in try...catch
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    record_added = False
+    errors = {}
+    if request.method == 'POST':
+        form = FeeTypeForm(request.POST)
+        if form.is_valid():
+            form1 = form.save(commit = False)
+            form1.institution = ins_obj
+            form1.save()
+            record_added = True
+            return render(request, 'add_fee_type.html', locals())
+        else:
+            errors['invalid_datails'] = 'Please enter valid data'
+            return render(request, 'add_fee_type.html', locals())
+    else:
+        form = FeeTypeForm()
+    return render(request, 'add_fee_type.html' , locals())
+
+
+def add_student_fee(request):
+    ''' add record for student fee '''
+
+    form = StudentFeeForm()
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk = ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    record_added = False
+    errors = {}
+    if request.method == 'POST':
+        form = StudentFeeForm(request.POST)
+        if form.is_valid():
+            form1 = form.save(commit = False)
+            form1.institution = ins_obj
+            form1.save()
+            record_added = True
+            return render(request, 'add_edit_student_fees.html', locals())
+        else:
+            errors['invalid_datails'] = 'Please enter valid data'
+            return render(request, 'add_edit_student_fees.html', locals())
+    else:
+        form = StudentFeeForm()
+    return render(request, 'add_edit_student_fees.html' , locals())
+
+
+def add_fee(request):
+    ''' adda record for fee '''
+
+    form = FeeForm()
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk = ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    record_added = False
+    errors = {}
+    if request.method == 'POST':
+        form = FeeForm(request.POST)
+        if form.is_valid():
+            form1 = form.save(commit = False)
+            form1.institution = ins_obj
+            form1.save()
+            record_added = True
+        else:
+            errors['invalid_datails'] = 'Please enter valid data'
+            return render(request, 'add_edit_fee.html', locals())
+    else:
+        form = FeeForm()
+    return render(request , 'add_edit_fee.html', locals())
+
+
+def fees_get_semester(request):
+    ''' get semester for corresponding fee objects for ajax request '''
+
+    stream_id = request.GET.get('sid')
+    fees_type_id = request.GET.get('fees_type_id')
+
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk = ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Malicious Activity</h3></body></'
+                            'html>')
+    stream_obj = Stream.objects.get(id = stream_id)
+    fees_type_obj = Fees_Type.objects.get(id = fees_type_id)
+
+    sg_list = StudentGroup.objects.filter(institution = ins_obj ,
+                    stream = stream_obj).values('id' , 'name')
+    list1 = []
+    results = {}
+
+    if sg_list:
+        for (index , item) in enumerate(sg_list):
+            try:
+                sg_obj = StudentGroup.objects.get(id = item['id'])
+                fee_obj = Fee.objects.get(fees_type = fees_type_obj , semister = sg_obj)
+            except Exception:
+                list1.append(item)
+        results['res'] = list1
+    return HttpResponse(json.dumps(results), mimetype = 'application/json')
+
+
+def add_fine_type(request):
+    ''' add a record for fine type '''
+
+    form = FineTypeForm()
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk = ins_id)  # put this in try...catch
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    record_added = False
+    errors = {}
+    if request.method == 'POST':
+        form = FineTypeForm(request.POST)
+        if form.is_valid():
+            form1 = form.save(commit = False)
+            form1.institution = ins_obj
+            form1.save()
+            record_added = True
+            return render(request, 'add_edit_fine_type.html' , locals())
+        else:
+            errors['invalid_datails'] = 'Please enter valid data'
+            return render(request, 'add_edit_fine_type.html', locals())
+    else:
+        form = FineTypeForm()
+    return render(request, 'add_edit_fine_type.html' , locals())
+
+
+def add_fees_schedule(request, fee_id):
+    ''' add a arecord for fee schedule '''
+
+    form = FeeScheduleForm()
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk = ins_id)  # put this in try...catch
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    fee_obj = Fee.objects.get(id=fee_id)
+    record_added = False
+    errors = {}
+    if request.method == 'POST':
+        form = FeeScheduleForm(request.POST)
+        if form.is_valid():
+            sh_amount = int(request.POST.get('fees_amount'))
+            fee_amount = fee_obj.amount
+            s_date = request.POST.get('start_date')
+            from django.forms.fields import DateField
+            date1 = DateField()
+            start_date = date1.to_python(s_date)
+            fee_obj = Fee.objects.get(id = fee_id)
+            max_date = get_date_for_add(fee_obj)
+            amount = get_basic_amount(fee_obj)
+            if max_date:
+                if max_date >= start_date:
+                    errors['start_date_greater'] = \
+                        ('Start date should not be greater than previous '
+                        'installment\'s end date(' + str(max_date) + ') ')
+                    return render(request, 'add_edit_fees_schedule.html',
+                                  locals())
+            if sh_amount > amount:
+                errors['amount_greater_than_basic_amount'] = \
+                    ('Fees Amount should not be greater than ' + str(amount)
+                    + '(basic_amount - installment_amount)')
+                return render(request, 'add_edit_fees_schedule.html', locals())
+            else:
+                form1 = form.save(commit = False)
+                form1.fee = fee_obj
+                form1.created_by = request.user
+                form1.institution = ins_obj
+                form1.save()
+                record_added = True
+                return render(request, 'add_edit_fees_schedule.html',
+                              locals())
+        else:
+            errors['invalid_datails'] = 'Please enter valid data'
+            return render(request, 'add_edit_fees_schedule.html',
+                          locals())
+    else:
+        form = FeeScheduleForm()
+        fee_sh_list = Fees_schedule.objects.filter(fee = fee_obj , is_active = True)
+        if fee_obj.payment_type == "recursive":
+            remaining_installments = fee_obj.installments - fee_sh_list.count()
+            if remaining_installments == 1:
+                amount = 0
+                for i in fee_sh_list:
+                    amount = amount + i.fees_amount
+                remaining_amount =  fee_obj.amount - amount
+            if remaining_installments == fee_obj.installments:
+                installment_no = 1
+    return render(request, 'add_edit_fees_schedule.html', locals())
+
+
+def get_basic_amount_edit(fee_sh_id, fee_obj):
+    '''get basic amount for validations for recursive payment type while editing '''
+
+    fee_sh_list = \
+        Fees_schedule.objects.filter(fee=fee_obj , is_active = True).exclude(id = fee_sh_id)
+    fee_amount = fee_obj.amount
+    sh_total = 0
+    if fee_sh_list:
+        for i in fee_sh_list:
+            sh_total = (sh_total + i.fees_amount)
+        amount = fee_obj.amount - sh_total
+        return amount
+    else:
+        return fee_amount
+
+
+def get_basic_amount(fee_obj):
+    ''' get basic amount for each fees for validations '''
+
+    fee_sh_list = Fees_schedule.objects.filter(fee=fee_obj , is_active = True)
+    fee_amount = fee_obj.amount
+    sh_total = 0
+    if fee_sh_list:
+        for i in fee_sh_list:
+            sh_total = (sh_total + i.fees_amount)
+        amount = fee_obj.amount - sh_total
+        return amount
+    else:
+        return fee_amount
+
+
+def get_date_for_add(fee_obj):
+    ''' get date for validating start date and end date'''
+
+    import datetime
+    end_date = datetime.datetime.now()#just to set type of end_date as datetime
+    fee_sh_list = \
+        Fees_schedule.objects.filter(fee=fee_obj , is_active = True).order_by('created_on')
+    if fee_sh_list:
+        fee_sh_obj = fee_sh_list[len(fee_sh_list) - 1]
+        end_date = fee_sh_obj.end_date
+        return end_date
+    else:
+        return None
+
+
+def get_date_for_edit(
+    fee_sh_id,
+    fee_obj,
+    start_date,
+    end_date,
+    ):
+    ''' get previous installment's end_date '''
+
+    try:
+        fee_sh_list_prev = Fees_schedule.objects.filter(fee=fee_obj,
+                id__lt=fee_sh_id , is_active = True).order_by('created_on')
+        if fee_sh_list_prev:
+            obj = fee_sh_list_prev[len(fee_sh_list_prev) - 1]
+            previous_end_date = obj.end_date
+        fee_sh_list_next = Fees_schedule.objects.filter(fee=fee_obj,
+                id__gt=fee_sh_id , is_active = True).order_by('-created_on')
+        if fee_sh_list_next:
+            obj = fee_sh_list_next[len(fee_sh_list_next) - 1]
+            next_start_date = obj.start_date
+        if fee_sh_list_prev and fee_sh_list_next:
+            if start_date > previous_end_date:
+                if end_date < next_start_date:
+                    return True
+                else:
+                    return 'end_date'
+            else:
+                return 'start_date'
+        elif fee_sh_list_prev and not fee_sh_list_next:
+            if start_date > previous_end_date:
+                return True
+            else:
+                return 'start_date'
+        elif fee_sh_list_next and not fee_sh_list_prev:
+            if end_date < next_start_date:
+                return True
+            else:
+                return 'end_date'
+    except:
+        pass
+
+
+def academic_year_validation(year1, year2):
+    ''' validations for academic year '''
+
+    str_year1 = str(year1)[0:4]
+    str_year2 = str(year2)[0:4]
+    if str_year1 != str_year2:
+        return False
+    else:
+        return True
+
+
+def edit_fine_type(request, fine_type_id):
+    ''' edit fine type '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk=ins_id)  # put this in try...catch
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    record_updated = False
+    try:
+        instance = Fine_type.objects.get(pk=fine_type_id)
+    except Exception:
+        errors['object_does_not_exists'] = 'Object Does Not Exist'
+        return render(request, 'add_edit_fine_type.html', locals())
+    if request.method == 'POST':
+        form = FineTypeForm(request.POST, instance=instance)
+        if form.is_valid():
+            form1 = form.save(commit=False)
+            form1.institution = ins_obj
+            form1.save()
+                # [2nd]===if u want to specify which fields to save use:
+                # instance.save(update_fields=['name'])
+            record_updated = True
+    else:
+        form = FineTypeForm(request.GET, instance=instance)
+        form = FineTypeForm(instance=instance)
+    return render(request, 'add_edit_fine_type.html', locals())
+
+
+def edit_fee_type(request, ftype_id):
+    ''' edit fee type '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk=ins_id)  # put this in try...catch
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+
+    record_updated = False
+    try:
+        instance = Fees_Type.objects.get(pk=ftype_id)
+    except Exception:
+        errors['object_does_not_exists'] = 'Object Does Not Exist'
+        return render(request, 'add_fee_type.html', locals())
+    if request.method == 'POST':
+        form = FeeTypeForm(request.POST, instance=instance)
+        if form.is_valid():
+            form1 = form.save(commit=False)
+            form1.institution = ins_obj
+            form1.save()
+                # [2nd]===if u want to specify which fields to save use:
+                # instance.save(update_fields=['name'])
+
+            record_updated = True
+    else:
+        form = FeeTypeForm(request.GET, instance=instance)
+        form = FeeTypeForm(instance=instance)
+
+    return render(request, 'add_fee_type.html', locals())
+
+def edit_fee(request, fee_id):
+    ''' edit fees '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk=ins_id)  # put this in try...catch
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    record_updated = False
+    try:
+        instance = Fee.objects.get(pk=fee_id)
+    except Exception:
+        errors['object_does_not_exists'] = 'Object Does Not Exist'
+        return render(request, 'add_edit_fee.html', locals())
+    if request.method == 'POST':
+        form = FeeForm(request.POST, instance=instance)
+        if form.is_valid():
+            form1 = form.save(commit=False)
+            form1.institution = ins_obj
+            form1.save()
+            try:
+                fee_sh_list = Fees_schedule.objects.filter(fee = instance)
+                for i in fee_sh_list:
+                    i.is_active = False
+                    i.save()
+            except Exception:
+                pass
+                # [2nd]===if u want to specify which fields to save use:
+                # instance.save(update_fields=['name'])
+
+            record_updated = True
+    else:
+        form = FeeForm(request.GET, instance=instance)
+        form = FeeForm(instance=instance)
+    return render(request, 'add_edit_fee.html', locals())
+
+
+def edit_student_fee(request, student_payment_id):
+    ''' edit student payment '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk=ins_id)  # put this in try...catch
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    record_updated = False
+    try:
+        instance = Student_fees.objects.get(pk=student_fee_id)
+    except Exception:
+        errors['object_does_not_exists'] = 'Object Does Not Exist'
+        return render(request, 'add_edit_student_fees.html', locals())
+    if request.method == 'POST':
+        form = StudentFeeForm(request.POST, instance=instance)
+        if form.is_valid():
+            form1 = form.save(commit=False)
+            form1.institution = ins_obj
+            form1.save()
+
+                # [2nd]===if u want to specify which fields to save use:
+                # instance.save(update_fields=['name'])
+
+            record_updated = True
+    else:
+        form = StudentFeeForm(request.GET, instance=instance)
+        form = StudentFeeForm(instance=instance)
+
+    return render(request, 'add_edit_student_fees.html', locals())
+
+
+def edit_fees_schedule(request , fee_schedule_id):
+    ''' edit fees schedule '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk=ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    record_updated = False
+    try:
+        instance = Fees_schedule.objects.get(pk=fee_schedule_id)
+    except Exception:
+        errors['object_does_not_exists'] = 'Object Does Not Exist'
+        return render(request, 'add_edit_fees_schedule.html', locals())
+    if request.method == 'POST':
+        form = FeeScheduleForm(request.POST, instance=instance)
+        sh_amount = int(request.POST.get('fees_amount'))
+        amount = instance.fee.amount
+        s_date = request.POST.get('start_date')
+        from django.forms.fields import DateField
+        d = DateField()
+        start_date = d.to_python(request.POST.get('start_date'))
+        end_date = d.to_python(request.POST.get('end_date'))
+        fee_obj = instance.fee
+        results = get_date_for_edit(fee_schedule_id, fee_obj, start_date,
+                                    end_date)
+        amount = get_basic_amount_edit(fee_schedule_id, fee_obj)
+        if results == 'start_date':
+            errors['start_date_greater'] = \
+                'Start date should not be greater than previous '\
+                'installment\'s end date'
+            return render(request, 'add_edit_fees_schedule.html', locals())
+        if results == 'end_date':
+            errors['end_date_greater'] = \
+                'end date should not be greater than next installment\'s '\
+                'start date'
+            return render(request, 'add_edit_fees_schedule.html', locals())
+        if sh_amount > amount:
+            errors['amount_greater_than_basic_amount'] = \
+                ('Fees Amount should not be greater than ' + str(amount)
+                + '(basic amount)')
+            return render(request, 'add_edit_fees_schedule.html', locals())
+        else:
+            if form.is_valid():
+                form1 = form.save(commit = False)
+                form1.institution = ins_obj
+                form1.save()
+
+                # [2nd]===if u want to specify which fields to save use:
+                # instance.save(update_fields=['name'])
+
+                record_updated = True
+    else:
+        form = FeeScheduleForm(request.GET, instance=instance)
+        form = FeeScheduleForm(instance=instance)
+
+    return render(request , 'add_edit_fees_schedule.html', locals())
+
+def student_payment(request , student_payment_id):
+
+    record_added = False
+    import datetime
+    curr_date = (datetime.datetime.now()).date()
+    errors = {}
+    sp_obj = Student_payment.objects.get(id = student_payment_id)
+    form = StudentPaymentForm()
+    total_amount_paid = 0
+    sp_details_list = Student_payment_details.objects.filter(student_payment = sp_obj)
+    if sp_details_list:
+        for i in sp_details_list:
+            total_amount_paid = total_amount_paid + i.amount
+    total_amount_remaining = sp_obj.fee.amount - total_amount_paid
+    if request.method == "POST":
+        form = StudentPaymentForm(request.POST)
+        if form.is_valid():
+            amount = int(request.POST.get('amount'))
+            if amount > total_amount_remaining:
+                errors['amount_greater_than_basic_amount'] = 'Cannot accept amount greater than "Total amount remaining"'
+            elif amount < total_amount_remaining:
+                if sp_obj.fee.payment_type == "recursive":
+                    remaining_installments = no_of_installments_paid(sp_obj)
+                    if remaining_installments == 1:
+                        errors['last_installment'] = 'This is last installment, pay remaining fees'
+                    elif remaining_installments == sp_obj.fee.installments:
+                        if amount < sp_obj.fee.fist_payment:
+                            errors['insufficient_first_payment'] = 'First installment should be minimum' + str(sp_obj.fee.fist_payment)
+                        else:
+                            accept_installment(form , sp_obj)
+                            record_added = True
+                    else:
+                        accept_installment(form , sp_obj)
+                        record_added = True
+                else:
+                    errors['fixed_payment'] = 'Installments not allowed for this payment'
+            else:
+                sp_obj.status = 'paid'
+                sp_obj.save()
+                form1 = form.save(commit = False)
+                form1.student_payment = sp_obj
+                form1.student_group = sp_obj.fee.semister
+                form.save()
+                record_added = True
+    elif request.method == 'GET':
+        pay_type = sp_obj.fee.payment_type
+        if pay_type == "fixed":
+            try:
+                fee_sh_obj = Fees_schedule.objects.get(fee = sp_obj.fee , is_active = True)
+                if curr_date > fee_sh_obj.end_date:
+                    date_diff = curr_date - fee_sh_obj.end_date
+                    late_payment_fine = fee_sh_obj.end_data_fine_type.fine_amount   * int(date_diff.days)
+            except Exception:
+                pass
+        elif pay_type == "recursive":
+            def calculate_late_payment_fine(fee_sh_obj , sp_details_count):
+                fee_sh_obj = fee_sh_list[sp_details_count]
+                if curr_date > fee_sh_obj.end_date:
+                    date_diff = curr_date - fee_sh_obj.end_date
+                    late_payment_fine = fee_sh_obj.end_data_fine_type.fine_amount * int(date_diff.days)
+                return late_payment_fine
+            sp_details_count = sp_details_list.count()
+            fee_sh_l = Fees_schedule.objects.filter(fee = sp_obj.fee)
+            if fee_sh_l:           # to be optimized
+                fee_sh_list = Fees_schedule.objects.filter(fee = sp_obj.fee , is_active = True)
+                if sp_details_count == 0:
+                    late_payment_fine = calculate_late_payment_fine(fee_sh_list , sp_details_count)
+                if sp_details_count == 1:
+                    late_payment_fine = calculate_late_payment_fine(fee_sh_list , sp_details_count)
+                if sp_details_count == 2:
+                    late_payment_fine = calculate_late_payment_fine(fee_sh_list , sp_details_count)
+                if sp_details_count == 3:
+                    late_payment_fine = calculate_late_payment_fine(fee_sh_list , sp_details_count)
+    return render(request , 'pay_student_payment.html' , locals())
+
+def accept_installment(form , sp_obj):
+    sp_obj.status = 'pending'
+    sp_obj.save()
+    form1 = form.save(commit = False)
+    form1.student_payment = sp_obj
+    form1.student_group = sp_obj.fee.semister
+    form.save()
+    return
+
+
+def show_payment_details(request , student_payment_id):
+    errors = {}
+    try:
+        sp_obj = Student_payment.objects.get(id = student_payment_id)
+        sp_details_list = Student_payment_details.objects.filter(student_payment = sp_obj)
+    except Exception:
+        pass
+    if not sp_details_list:
+        errors["No records"] = "Payment not receieved"
+    return render(request , 'student_payment_details.html' , locals())
+
+def no_of_installments_paid(sp_obj):
+    ''' returns no. of installments paid '''
+
+    total_installments = sp_obj.fee.installments
+    paid_installments = Student_payment_details.objects.filter(student_payment = sp_obj).count()
+    remaining_installments = int(total_installments) - int(paid_installments)
+    return remaining_installments
+
+
+def deactivate(
+    request,
+    ftype_id='',
+    ins_id='',
+    fee_id='',
+    fine_type_id='',
+    ):
+    ''' deactivate the object '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(pk = ins_id)  # put this in try...catch
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+    ftype_id = request.GET.get('ftype_id')
+    fee_id = request.GET.get('fee_id')
+    fine_type_id = request.GET.get('fine_type_id')
+    if ftype_id:
+        try:
+            fees_obj = Fees_Type.objects.get(institution=ins_obj, pk=ftype_id)
+            fees_obj.is_active = 0
+            fees_obj.save()
+            next = '/fms/manage/fees_type/'
+            return HttpResponseRedirect(next)
+            return (request, 'manage_fees_type.html', locals())
+        except Exception:
+            errors['object_does_not_exists'] = 'Object Does Not Exist'
+    if fee_id:
+        try:
+            fees_obj = Fee.objects.get(pk = fee_id)
+            fees_obj.is_active = 0
+            fees_obj.save()
+            next = '/fms/manage/fees/'
+            return HttpResponseRedirect(next)
+            return (request, 'manage_fees.html', locals())
+        except Exception:
+            errors['object_does_not_exists'] = 'Object Does Not Exist'
+    if fine_type_id:
+        try:
+            fine_type_obj = Fine_type.objects.get(institution=ins_obj,
+                    pk=fine_type_id)
+            fine_type_obj.is_active = 0
+            fine_type_obj.save()
+            next = '/fms/manage/fine_type/'
+            return HttpResponseRedirect(next)
+            return (request , 'manage_fine_type.html' , locals())
+        except Exception:
+            errors['object_does_not_exists'] = 'Object Does Not Exist'
+    ins_obj = Institution.objects.get(id=ins_id)
+    return HttpResponse('<html><body><h3>Malicious Activity</h3></body></html'
+                        '>')
+
+
+def manage_levels(request):
+    ''' display all records for levels '''
+
+    ins_obj = Institution.objects.all()
+    return render(request, 'manage_level.html', locals())
+
+
+@login_required
+def add_level(request):
+    ''' add a level '''
+
+    form = LevelsForm()
+    record_added = False
+    if request.method == 'POST':
+        form = LevelsForm(request.POST)
+        if form.is_valid():
+            form.save()
+            record_added = True
+
+    return render(request, 'add_level.html', locals())
+
+
+@login_required
+def edit_level(request):
+    ''' edit a level '''
+
+    errors = {}
+    record_updated = False
+    level_id = request.GET.get('level_id', '')
+    try:
+        instance = Level.objects.get(pk=level_id)
+    except Exception:
+        errors['object_does_not_exists'] = 'Object Does Not Exist'
+        return render(request, 'add_level.html', locals())
+    if request.method == 'POST':
+
+        form = LevelsForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+
+            # [2nd]===if u want to specify which fields to save use:
+            # instance.save(update_fields=['name'])
+
+            record_updated = True
+    else:
+        form = LevelsForm(request.GET, instance=instance)
+        form = LevelsForm(instance=instance)
+    ins_obj = Institution.objects.all()
+    return render(request, 'add_level.html', locals())
+
+def manage_fine_type(request):
+    ''' diaplays all records for fine_type '''
+
+    errors = {}
+    ins_obj = None
+    try:
+        ins_id = request.session['ins_id']
+        ins_obj = Institution.objects.get(id = ins_id)
+    except Exception:
+        return HttpResponse('<html><body><h3>Broken Session</h3></body></html'
+                            '>')
+
+    if not ins_obj:
+        errors['no_records_to_display'] = 'No records to display'
+    return render(request, 'manage_fine_type.html', locals())

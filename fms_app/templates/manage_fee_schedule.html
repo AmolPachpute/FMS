@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load tags %}
+
+
+{% block title %}Manage Fee Scheduling{% endblock %}
+    
+{% block midpart %}
+<h2>Fees Scheduling</h2>
+<table border="2" cellspacing="2" cellpadding="20">
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+
+
+{% if not fee_sh_list %}
+      <p style="color:green;" ><h1 style="color:green">No records to display</h1></p>
+{% endif %}
+
+
+    {% if ins_obj and fee_sh_list %}
+        <tr>
+            
+            <td><h3>Fee Type</h3></td>
+            <td><h3>Start Date</h3></td>
+            <td><h3>End Date</h3></td>
+            <td><h3>Fee Amount</h3></td>
+            <td><h3>End Date fine type</h3></td>
+            <td><h3>Created By</h3></td>
+            <td><h3>Created On</h3></td>
+             <td><h3>Is Active</h3></td>
+            <td><h3>Action</h3></td>
+        </tr>
+
+       {% if fee_sh_list%}
+           
+           {%for i in fee_sh_list%}
+           
+            <tr>
+            <td>
+            {{i.fee}}<p></p>
+            </td>
+            
+             <td>
+            {{i.start_date}}<p></p>
+            </td>
+            
+            <td>
+            {{i.end_date}}<p></p>
+            </td>
+            
+            <td>
+            {{i.fees_amount}}<p></p>
+            </td>
+            
+            <td>
+            {{i.end_data_fine_type}}<p></p>
+            </td>
+            
+             <td>
+            {{i.created_by}}<p></p>
+            </td>
+             
+              <td>
+            {{i.created_on}}<p></p>
+            </td>
+              
+               <td>
+            {{i.is_active}}<p></p>
+            </td>
+            
+               
+            <td>
+            <a class="various fancybox.iframe" href="/fms/manage/fees_schedule/edit/{{i.id}}/" >Edit</a>
+            
+            <!--&nbsp;&nbsp;&nbsp;&nbsp<a href="#" onclick="confirm_box('/fms/manage/delete/?fine_type_id={{i.id}}&ins_id={{ins_obj.id}}')" >Deactivate</a><p></p>-->            </td>
+            </tr>
+    
+        
+         {% endfor %}
+        {% endif %}
+  
+    {% endif %}
+</table>
+
+********{{fee_obj.installments|add:"-1"}}
+{%  ifequal fee_obj.payment_type "recursive" %} 
+
+    {% if fee_sh_list.count < fee_obj.installments %} 
+    <!--  in above line in 'if' there shud be spaces before and after '<' otherwise runtime exception is thrown   -->
+    <div>
+        <a class="various fancybox.iframe" href="/fms/manage/fees_schedule/add/{{fee_obj.id}}"><h4>Add Fees Schedule</h4></a>
+    </div>
+    {% endif %}
+{% else %}
+    {% ifequal fee_sh_list.count 0 %}
+        <div>
+            <a class="various fancybox.iframe" href="/fms/manage/fees_schedule/add/{{fee_obj.id}}"><h4>Add Fees Schedule</h4></a>
+        </div>
+    {% endifequal %}
+{% endifequal %}
+
+<p></p>
+<br>
+    
+
+</table>
+
+
+{% endblock %}

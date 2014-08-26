@@ -1,0 +1,166 @@
+{% extends 'form_base.html'%}
+
+
+{% block midpart %}
+
+
+{% if student_fee_id %}
+    <h2>Edit Fee Schedule</h2>
+{% else %}
+    <h2>Add Fee Schedule</h2>
+{% endif %}
+    {{request.user}}
+
+<form action="{% if fee_schedule_id %}/fms/manage/fees_schedule/edit/{{fee_schedule_id}}/{% else %}/fms/manage/fees_schedule/add/{{fee_obj.id}}/{% endif %}" method="POST">
+{% csrf_token %}
+
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+
+{% if record_added%}
+            <p><h1 style="color:green;">Fee Schedule added successfully</h1></p>
+{% elif record_updated %}
+            <p><h1 style="color:green;">Fee Schedule updated successfully</h1></p>
+{% else %}
+
+    <table border="0" cellspacing="5" cellpadding="5" style="width:620px;text-align:left;">
+        {% ifequal fee_obj.payment_type "fixed" %}
+            <tr>
+                  <td><h3> Start Date:</h3><p></p><p></p></td>
+                  <td>{{form.start_date}}</td>
+
+            </tr>
+            {% if form.start_date.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ form.start_date.errors|striptags }}</td>
+                </tr>
+            {% endif %}
+            <tr>
+                  <td><h3> End Date:</h3><p></p><p></p></td>
+                  <td>{{form.end_date}}</td>
+            </tr>
+             {% if form.end_date.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ form.end_date.errors|striptags }}</td>
+                </tr>
+            {% endif %}
+
+            {% if fee_obj.amount %}
+
+            <tr>
+                  <td><h3> Fees Amount:</h3><p></p><p></p></td>
+                  <td><input type="text" name="fees_amount" value="{{fee_obj.amount}}"</td>
+                  <td>Fixed,No installments</td>
+            </tr>
+            {% else %}
+                 <tr>
+                  <td><h3> Fees Amount:-</h3><p></p><p></p></td>
+                  <td>{{form.fees_amount}}</td>
+
+            </tr>
+            {% endif %}
+             {% if form.fees_amount.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ form.fees_amount.errors|striptags }}</td>
+                </tr>
+            {% endif %}
+
+            <tr>
+                  <td><h3> End Date Fine Type:</h3><p></p><p></p></td>
+                  <td>{{form.end_data_fine_type}}</td>
+            </tr>
+            {% if form.end_data_fine_type.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ form.end_data_fine_type.errors|striptags }}</td>
+                </tr>
+            {% endif %}
+
+             <tr>
+                  <td><h3> Is Active:</h3><p></p><p></p></td>
+                  <td>{{form.is_active}}</td>
+            </tr>
+
+    {% else %}
+              <tr>
+                  <td><h3> Start Date:</h3><p></p><p></p></td>
+                  <td>{{form.start_date}}</td>
+
+            </tr>
+            {% if form.start_date.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ form.start_date.errors|striptags }}</td>
+                </tr>
+            {% endif %}
+            <tr>
+                  <td><h3> End Date:</h3><p></p><p></p></td>
+                  <td>{{form.end_date}}</td>
+            </tr>
+             {% if form.end_date.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ form.end_date.errors|striptags }}</td>
+                </tr>
+            {% endif %}
+            {% if remaining_amount %}
+            <tr>
+                  <td><h3> Fees Amount(This is last installment):</h3><p></p><p></p></td>
+                  <td><input type="text" name="fees_amount" value="{{remaining_amount}}"</td>
+
+            </tr>
+
+            {% elif installment_no %}
+                <tr>
+                  <td><h3> Fees Amount(This is first Payment)</h3><p></p><p></p></td>
+                 <td><input type="text" name="fees_amount" value="{{fee_obj.fist_payment}}"</td>
+
+            </tr>
+
+            {% else %}
+                <tr>
+                  <td><h3> Fees Amount:</h3><p></p><p></p></td>
+                  <td>{{form.fees_amount}}</td>
+
+            </tr>
+            {% endif %}
+             {% if form.fees_amount.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ form.fees_amount.errors|striptags }}</td>
+                </tr>
+            {% endif %}
+
+            <tr>
+                  <td><h3> End Date Fine Type:</h3><p></p><p></p></td>
+                  <td>{{form.end_data_fine_type}}</td>
+            </tr>
+            {% if form.end_data_fine_type.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ form.end_data_fine_type.errors|striptags }}</td>
+                </tr>
+            {% endif %}
+            <tr>
+                  <td><h3> Is Active:</h3><p></p><p></p></td>
+                  <td>{{form.is_active}}</td>
+            </tr>
+
+        {% endifequal %}
+    </table>
+        {%if fee_schedule_id%}<input type="submit" value="Update">
+        {%else%}
+            <input type="submit" value="Add">
+        {% endif %}
+{% endif %}
+</form>
+
+
+{% endblock %}

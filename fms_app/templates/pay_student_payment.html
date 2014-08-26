@@ -1,0 +1,121 @@
+{% extends 'form_base.html' %}
+
+
+
+
+{% block title %}Payment {% endblock %}
+   
+{% block midpart %}
+    
+  
+    
+<h2>Payment</h2>
+{% if record_added %}
+   <h2>Record Added Succesfully</h2>
+
+{% else %}
+
+{% if errors %}
+    {%for i in errors.values %}
+     <p style="color:green;" ><h1 style="color:red">{{i}}</h1></p>
+     {% endfor %}
+{% endif %}
+
+<div>
+    <form action="/fms/manage/student_fees/pay/{{sp_obj.id}}/"  method="POST">
+        {% csrf_token %}
+    <table border="0" cellspacing="5" cellpadding="2" style="width:620px;text-align:left;">
+      {{sp_obj.fee.payment_type}}
+      {{sp_obj.fee.installments}}
+                <tr>
+                    <td><h3>Student Name:</h3></td>
+                    <td>{{sp_obj.student}}</td>
+                </tr>
+                
+                <tr>
+                    <td><h3>Fee Type:</h3></td>
+                    <td>{{sp_obj.fee.fees_type}}</td>
+                </tr>
+            
+                
+                <tr>
+                    <td><h3>Stream</h3></td>
+                    <td>{{sp_obj.fee.semister}}</td>
+                </tr>
+                
+                <tr>
+                     <td><h3>Total Fee:</h3></td>
+                     <td>{{sp_obj.fee.amount}}</td>
+                     <td>
+                        <table border="2">
+                           {% if sp_details_list %}
+                              {% for i in sp_details_list %}
+                                 <tr>
+                                    <td>{{i.created_on}}</td>
+                                    <td>{{i.amount}}</td>
+                                 </tr>
+                              {% endfor %}
+                           {% endif %}
+                         <tr bgcolor="cyan">
+                           <td>Total amount paid</td>
+                           <td>{{total_amount_paid}}</td>
+                         </tr>
+                         {% ifnotequal total_amount_paid 0 %}
+                          <tr bgcolor="red">
+                              <td >Total Amount Remaining<br>(To be paid)</td>
+                              <td>{{total_amount_remaining}}</td>
+                           </tr>
+                        {% endifnotequal %}
+                        {% if late_payment_fine %}
+                            <td >Late Payment Fine:<br>(To be paid)</td>
+                              <td>{{late_payment_fine}}</td>
+                        {% endif %}
+                        </table>
+                     </td>
+                </tr>
+               
+                {% for field in form %}
+                <tr>
+                  <td><h3>{{ field.label_tag }} :</h3><p></p></td>
+                  <td>{{ field }}</td>
+                </tr>
+                {% if field.errors %}
+                <tr>
+                  <td></td>
+                <td style="color:red;">{{ field.errors|striptags }}</td>
+                </tr>
+                {% endif %}
+                {% if field.help_text %}
+                <tr>
+                    <td></td>
+                    <td>{{ field.help_text }}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+                
+                {% if form.non_field_errors %}
+                {% for i in form.non_field_errors%}
+                 <p style="color:red"> {{i}}</p>
+                {% endfor %}
+                {% endif %}
+    </table>
+    {% ifequal sp_obj.fee.payment_type 'recursive' %}
+   {% ifequal total_amount_remaining sp_obj.fee.amount %}
+      <h3>First installment should be minimum {{sp_obj.fee.fist_payment}}</h3>
+   {% endifequal %}
+{% endifequal %}
+
+       
+        <input type="submit" value="Submit">
+    </form>
+</div>
+<p></p>
+
+<p></p>
+<br>
+    
+
+</table>
+{% endif %}
+{{ins_obj}}
+{% endblock %}
